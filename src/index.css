@@ -1,0 +1,339 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   VISUAL SYSTEM — Tejaswi Sreerangam, Hardware Engineer
+   Dark navy ground. Warm sunrise palette for the past, electric blue/violet
+   for the present and technical sections, deep purple horizon for the future.
+   ========================================================================== */
+
+@theme {
+  /* Grounds */
+  --color-void: #04060d;
+  --color-ink: #080c17;
+  --color-ink-2: #0c1220;
+  --color-ink-3: #121a2b;
+  --color-ink-4: #182138;
+
+  /* Type */
+  --color-bright: #eef2f9;
+  --color-muted: #a7b3c8;
+  --color-faint: #737f96;
+
+  /* Past — sunrise */
+  --color-amber: #f0a03c;
+  --color-sunrise: #ff8a4a;
+  --color-gold: #e4c684;
+  --color-parchment: #f3e6cc;
+  --color-burgundy: #7c2c40;
+
+  /* Opening sequence — night, twilight, and the jade light after dawn */
+  --color-jade: #45b394;
+  --color-jade-deep: #1f6b58;
+  --color-plum: #7a4a80;
+
+  /* ------------------------------------------------------------------
+     ENGINEERING COLOUR SEMANTICS
+     One meaning per colour, everywhere on the site. A vermilion line in a
+     DMA regression means the same thing as a vermilion waveform in
+     verification and a vermilion CAN frame under fault injection.
+     ------------------------------------------------------------------ */
+  --color-flow: #45b394; /* jade      — nominal signal, information flow   */
+  --color-active: #e8c77a; /* gold    — selected, active, correct, present */
+  --color-fault: #e2603f; /* vermilion — failure, mismatch, fault          */
+  --color-idle: #46566d; /* ink      — inactive architecture              */
+
+  /* Present — signal */
+  --color-signal: #5b93ff;
+  --color-violet: #9d80ff;
+
+  /* Status */
+  --color-mint: #55c9a4;
+  --color-coral: #e2705f;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+}
+
+:root {
+  --hair: rgb(148 168 205 / 0.14);
+  --hair-strong: rgb(148 168 205 / 0.26);
+  --nav-h: 4rem;
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+
+* {
+  border-color: var(--hair);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Keep anchored sections clear of the sticky navigation bar. */
+  scroll-padding-top: calc(var(--nav-h) + 1rem);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-void);
+  color: var(--color-bright);
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Never allow horizontal scrolling on any viewport. */
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgb(91 147 255 / 0.3);
+  color: var(--color-bright);
+}
+
+/* Visible, high-contrast focus for every interactive element. */
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+  margin: 0;
+}
+
+p {
+  text-wrap: pretty;
+  margin: 0;
+}
+
+/* ==========================================================================
+   MOTION — every animated rule is disabled for prefers-reduced-motion.
+   Components additionally read the preference in JS and render static
+   alternatives rather than merely skipping the transition.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* One deliberate exception. The opening sequence means "one thought replaces
+     another"; cutting instantly between them loses the sense of replacement and
+     reads as a glitch. These elements keep a short opacity-only crossfade —
+     no movement, no scale, no blur. */
+  .allow-crossfade,
+  .allow-crossfade * {
+    transition-property: opacity !important;
+    transition-duration: 320ms !important;
+  }
+}
+
+/* ==========================================================================
+   COMPONENT PRIMITIVES
+   ========================================================================== */
+
+@utility shell {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+
+  @media (width >= 40rem) {
+    padding-inline: 2rem;
+  }
+
+  @media (width >= 64rem) {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* Small uppercase technical label — the precise, engineering-side voice. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+
+/* Philosophical voice. Used sparingly and never for load-bearing content. */
+@utility quiet-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+@utility panel {
+  background: linear-gradient(180deg, rgb(18 26 43 / 0.72), rgb(12 18 32 / 0.72));
+  border: 1px solid var(--hair);
+  border-radius: 0.875rem;
+  backdrop-filter: blur(6px);
+}
+
+@utility hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hair-strong), transparent);
+}
+
+/* Screen-reader-only, but focusable (used by the skip link). */
+@utility sr-only-focusable {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+
+  &:focus {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 100;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0.625rem 1rem;
+    clip-path: none;
+    background: var(--color-ink-3);
+    border: 1px solid var(--color-signal);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* ==========================================================================
+   AMBIENT ANIMATION
+   Slow, low-amplitude, GPU-friendly (transform/opacity only).
+   ========================================================================== */
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
+    opacity: 0.7;
+  }
+}
+
+/* A bright segment running along an otherwise quiet trace. */
+@keyframes trace-flow {
+  from {
+    stroke-dashoffset: 1600;
+  }
+  to {
+    stroke-dashoffset: -160;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* A signal travelling along a diagram connector. */
+@keyframes signal-down {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes signal-right {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Waveform stroke drawing itself in once, on entry. */
+@keyframes draw-in {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-drift {
+  animation: drift 9s ease-in-out infinite;
+}
+
+.animate-trace-flow {
+  stroke-dasharray: 120 1480;
+  animation: trace-flow 21s linear infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 4.5s ease-in-out infinite;
+}
+
+.animate-signal-down {
+  animation: signal-down 3.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.animate-signal-right {
+  animation: signal-right 3.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Applied by IntersectionObserver when a waveform enters view. */
+.waveform path {
+  stroke-dasharray: var(--len, 1200);
+  stroke-dashoffset: var(--len, 1200);
+}
+
+.waveform.is-drawn path {
+  animation: draw-in 1.9s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waveform path {
+    stroke-dashoffset: 0;
+  }
+}
