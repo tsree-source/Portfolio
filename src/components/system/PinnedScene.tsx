@@ -1,5 +1,5 @@
 import { C } from './palette'
-import { useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useSectionProgress } from '../../hooks/useSectionProgress'
 import { useIsCompact, useReducedMotion } from '../../hooks/useMotionPreference'
 
@@ -12,6 +12,8 @@ export type SceneState = {
   local: number
   reduced: boolean
   compact: boolean
+  /** Whether any part of the scene is on screen. Expensive renderers idle when false. */
+  inView: boolean
 }
 
 /**
@@ -50,6 +52,18 @@ export function PinnedScene({
   const sectionRef = useRef<HTMLElement>(null)
   const reduced = useReducedMotion()
   const compact = useIsCompact()
+  const [inView, setInView] = useState(false)
+
+  // A renderer that costs real work should not run while nobody can see it.
+  useEffect(() => {
+    const element = sectionRef.current
+    if (!element) return
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
+      rootMargin: '200px 0px',
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
 
   // Sampled well above the state count so a boundary is never skipped, and
   // quantised so scrolling inside a state costs no re-render.
@@ -70,7 +84,7 @@ export function PinnedScene({
       style={{ height: `calc(${distance}svh + 100svh)` }}
     >
       <div className="sticky top-0 flex h-[100svh] flex-col overflow-hidden">
-        {children({ state, progress, local, reduced, compact })}
+        {children({ state, progress, local, reduced, compact, inView })}
       </div>
     </section>
   )

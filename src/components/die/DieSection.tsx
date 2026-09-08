@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { dieRegions, pillars, type DieRegionId } from '../../data/content'
-import { EngineeringDie } from './EngineeringDie'
+import { DieStage } from './DieStage'
 import { PinnedScene } from '../system/PinnedScene'
 import { Callout, Label, SceneTitle, TermList } from '../system/annotations'
 import { Reveal } from '../primitives'
@@ -8,13 +8,22 @@ import { Reveal } from '../primitives'
 /**
  * The die scene.
  *
- * Scroll walks the die region by region — the primary storytelling gesture.
- * Pointer and keyboard can override that at any time, which makes the same
- * object serve as exploration and as secondary navigation without ever
- * becoming a row of buttons.
+ * Scroll walks the die — that is the primary storytelling gesture. Pointer and
+ * keyboard override it at any moment, which lets the same object serve as
+ * exploration and as secondary navigation without becoming a row of buttons.
  *
- * States: 0 overview · 1–6 each functional region · 7 the whole die again.
+ * The state machine is shared by both renderers, so the WebGL die and the SVG
+ * fallback tell the same story at the same scroll position:
+ *
+ *   0  silhouette — the package, barely lit
+ *   1  die reveal — the core comes up
+ *   2  interconnect illumination — the spine and taps carry signal
+ *   3–8  each functional region in turn
+ *   9  the whole die again
  */
+const FIRST_REGION_STATE = 3
+const STATES = FIRST_REGION_STATE + dieRegions.length + 1
+
 export function DieSection() {
   const [hovered, setHovered] = useState<DieRegionId | null>(null)
 
@@ -26,39 +35,48 @@ export function DieSection() {
 
   return (
     <>
-      <PinnedScene id="present" label="The functional regions of the work" states={8} vh={360} compactVh={280}>
-        {({ state, reduced, compact }) => {
-          // Scroll selects; the pointer wins while it is on the die.
-          const scrolled = state >= 1 && state <= 6 ? dieRegions[state - 1].id : null
-          const active = hovered ?? scrolled
+      <PinnedScene
+        id="present"
+        label="The functional regions of the work"
+        states={STATES}
+        vh={460}
+        compactVh={300}
+      >
+        {({ state, reduced, compact, inView }) => {
+          const walked =
+            state >= FIRST_REGION_STATE && state < FIRST_REGION_STATE + dieRegions.length
+              ? dieRegions[state - FIRST_REGION_STATE].id
+              : null
+          // The pointer wins while it is on the die; otherwise scroll decides.
+          const active = hovered ?? walked
           const region = dieRegions.find((r) => r.id === active) ?? null
-          const zoom = compact ? 0 : active && state >= 1 && state <= 6 ? 0.32 : 0
 
           return (
-            <div className="relative flex h-full flex-col justify-center py-16">
+            <div className="relative flex h-full flex-col justify-center py-14">
               {/* The die is the composition: large, pushed off-axis, allowed to
                   run past the text column rather than sitting in a tidy half. */}
               <div
                 className={
                   compact
                     ? 'relative w-full px-4'
-                    : 'pointer-events-auto absolute inset-y-0 right-[-8%] flex w-[74%] items-center'
+                    : 'absolute inset-y-0 right-[-6%] flex w-[70%] items-center'
                 }
               >
-                <EngineeringDie
+                <DieStage
+                  state={state}
                   active={active}
                   onActivate={setHovered}
                   onSelect={go}
-                  zoom={zoom}
                   reduced={reduced}
-                  className="h-auto w-full"
+                  compact={compact}
+                  inView={inView}
                 />
               </div>
 
               <div className="shell relative z-10 grid items-center gap-8 lg:grid-cols-[minmax(0,22rem)_1fr]">
                 {/* Edge-aligned annotation column — no container. */}
                 <div className="order-2 flex flex-col justify-center lg:order-1 lg:h-[30rem]">
-                  <div style={{ opacity: state === 0 ? 1 : 0, transition: 'opacity 600ms ease' }}>
+                  <div style={{ opacity: state <= 1 ? 1 : 0, transition: 'opacity 600ms ease' }}>
                     <SceneTitle
                       eyebrow="The present"
                       title="One engineer, six functional regions."
@@ -69,8 +87,18 @@ export function DieSection() {
                     </SceneTitle>
                   </div>
 
+                  {state === 2 && !region && (
+                    <div className="lg:-mt-40">
+                      <Callout title="Interconnect" tone="flow" visible>
+                        Nothing on a die works alone. The spine is what makes six regions one
+                        system — and it is the same idea as the signal path running through the
+                        rest of this page.
+                      </Callout>
+                    </div>
+                  )}
+
                   {region && (
-                    <div className="-mt-[1px]" style={{ marginTop: state === 0 ? '-14rem' : 0 }}>
+                    <div className="lg:-mt-40">
                       <Callout title={region.name} tone="active" visible>
                         <p className="text-[0.9375rem] leading-relaxed text-bright">{region.question}</p>
                         <p className="mt-2 text-[0.875rem] leading-relaxed text-muted">{region.body}</p>
@@ -89,11 +117,13 @@ export function DieSection() {
                     </div>
                   )}
 
-                  {state === 7 && !region && (
-                    <Callout title="One system" tone="flow" visible>
-                      These are not separate careers. They are the same curiosity at different
-                      layers of the same hardware.
-                    </Callout>
+                  {state === STATES - 1 && !region && (
+                    <div className="lg:-mt-40">
+                      <Callout title="One system" tone="flow" visible>
+                        These are not separate careers. They are the same curiosity at different
+                        layers of the same hardware.
+                      </Callout>
+                    </div>
                   )}
                 </div>
 
